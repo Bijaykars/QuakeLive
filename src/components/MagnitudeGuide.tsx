@@ -16,7 +16,8 @@ const LADDER = [
 const PICKS = Array.from({ length: 15 }, (_, i) => (2 + i * 0.5).toFixed(1))
 
 function fmtTimes(x: number): string {
-  if (x >= 1_000_000) return `${(x / 1_000_000).toPrecision(3)} million×`
+  if (x >= 1e9) return `${(x / 1e9).toPrecision(3)} billion×`
+  if (x >= 1e6) return `${(x / 1e6).toPrecision(3)} million×`
   if (x >= 1000) return `${Math.round(x).toLocaleString()}×`
   if (x >= 10) return `${Math.round(x)}×`
   return `${x.toFixed(1)}×`
