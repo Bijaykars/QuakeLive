@@ -22,6 +22,10 @@ networks publishing it — with the science shown, not just the dots.
 
 ## ✨ What it does
 
+<table>
+<tr>
+<td width="62%" valign="top">
+
 - 🔴 **Live global feed** — the USGS feed is polled every minute and merged with EMSC's
   real-time WebSocket push, so new earthquakes toast on screen seconds after publication.
   Records are enriched and revised as networks review them, and every revision is tracked.
@@ -30,6 +34,13 @@ networks publishing it — with the science shown, not just the dots.
 - 📊 **Seismic summary** — magnitude-class breakdown, strongest event, felt reports and
   shallow-event share over a 24-hour or 7-day window.
 - 🕐 **24 h / 7 d timeline** — a scrubbable strip of every event; click a spike to fly there.
+
+</td>
+<td width="38%" valign="top">
+<img src="docs/summary-panel.png" alt="Seismic summary panel with magnitude-class breakdown" width="100%" />
+</td>
+</tr>
+</table>
 
 ## 🔎 Every event, explained
 
@@ -43,7 +54,18 @@ Click any dot and QuakeLive explains it twice: once in plain language, once for 
 | "How common is this size?" global rarity context | Nearest-station seismogram with P/S arrivals |
 | Rupture-length estimate (Wells–Coppersmith) | CSV / PNG download of the waveform |
 
-<img src="docs/event-detail.png" alt="Event detail drawer for a M 6.3 with ShakeMap contours on the map" width="100%" />
+<table>
+<tr>
+<td width="50%" valign="top">
+<img src="docs/event-detail.png" alt="Event detail drawer for a M 6.3 — plain-language overview" width="100%" />
+</td>
+<td width="50%" valign="top">
+<img src="docs/seismogram.png" alt="Nearest-station seismogram with predicted P and S arrivals" width="100%" />
+<br /><br />
+<img src="docs/research-export.png" alt="Research export panel querying the USGS archive to CSV" width="78%" />
+</td>
+</tr>
+</table>
 
 ### ⚪⚫ Focal mechanism, computed exactly
 
@@ -52,16 +74,17 @@ sign **γᵀ·M·γ** from the published moment tensor in a lower-hemisphere equ
 projection, so nodal lines emerge exactly where the physics puts them — including
 non-double-couple components. Validated against the USGS-published T/P/N principal axes.
 
-<img src="docs/focal-mechanism.png" alt="Focal mechanism beachball with nodal planes, scalar moment and faulting style" width="100%" />
+<p align="center">
+<img src="docs/focal-mechanism.png" alt="Focal mechanism beachball with nodal planes, scalar moment and faulting style" width="470" />
+</p>
 
 ### 📈 The actual wave
 
 For any event, QuakeLive finds the nearest open seismic station in the EarthScope/IRIS
 FDSN archive and draws the real vertical-channel waveform: predicted P and S arrivals
 (iasp91), peak-shaking time, and the classic S−P single-station distance check.
-Both the raw samples (CSV with metadata header) and the plot (PNG) are downloadable.
-
-<img src="docs/seismogram.png" alt="Nearest-station seismogram with predicted P and S arrivals" width="100%" />
+Both the raw samples (CSV with metadata header) and the plot (PNG) are downloadable —
+see the seismogram panel above.
 
 ### 📐 Know your magnitudes
 
@@ -69,15 +92,15 @@ An interactive explainer of the logarithmic scale: pick two magnitudes and see t
 as spheres of TNT (volume ∝ energy), with the calculation shown —
 one whole step = 10¹·⁵ ≈ **32× the energy** and 10× the ground motion.
 
-<img src="docs/magnitude-guide.png" alt="Know your magnitudes — interactive comparison of M 5 and M 7 drawn as TNT spheres" width="100%" />
+<p align="center">
+<img src="docs/magnitude-guide.png" alt="Know your magnitudes — interactive comparison of M 5 and M 7 drawn as TNT spheres" width="560" />
+</p>
 
 ### 📥 Research export
 
 One click exports what's on screen; or query the full USGS ComCat archive (complete back
 to ~1900) by date range, magnitude and map extent — 18 research-ready CSV columns that
-open straight into pandas, R or Excel.
-
-<img src="docs/research-export.png" alt="Research export panel querying the USGS archive to CSV" width="100%" />
+open straight into pandas, R or Excel. Shown above next to the event drawer.
 
 ## 🚀 Getting started
 
