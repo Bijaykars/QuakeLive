@@ -49,11 +49,13 @@ then the full technical record.
 
 | Plain language | Technical detail |
 | --- | --- |
-| Summary, depth, felt reports, PAGER alert | Full source record (stations, azimuthal gap, RMS…) |
-| Official USGS ShakeMap MMI contours drawn on the map | ShakeMap ground-motion curves (PGA, PGV, SA, ±σ) |
-| Radiated energy with TNT and Hiroshima equivalents | Focal mechanism "beachball" from the moment tensor |
-| "How common is this size?" global rarity context | Nearest-station seismogram with P/S arrivals |
-| Rupture-length estimate (Wells–Coppersmith) | CSV / PNG download of the waveform |
+| USGS tectonic summary — *why* it happened here | Full source record (stations, azimuthal gap, RMS…) |
+| Official aftershock forecast, 1 day → 1 year | ShakeMap ground-motion curves (PGA, PGV, SA, ±σ) |
+| PAGER fatality and economic loss probabilities | Focal mechanism "beachball" from the moment tensor |
+| Landslide and liquefaction hazard alerts | Multi-agency tensor comparison, incl. Global CMT |
+| "Did You Feel It?" intensity vs distance | Nearest-station seismogram + real analyst picks |
+| Radiated energy with TNT / Hiroshima equivalents | ShakeMap finite rupture drawn on the map |
+| "How common is this size?" rarity context | CSV / PNG download of the waveform |
 
 <table>
 <tr>
@@ -79,13 +81,23 @@ non-double-couple components. Validated against the USGS-published T/P/N princip
 <img src="docs/focal-mechanism.png" alt="Focal mechanism beachball with nodal planes, scalar moment and faulting style" width="470" />
 </p>
 
-### 📈 The actual wave
+### 🔬 Every agency's answer, side by side
+
+Large earthquakes get independently analysed by several institutions, and they never agree
+exactly. QuakeLive shows all of them — each beachball drawn from that agency's own
+published tensor, via the only browser-reachable route to the **Global CMT** catalogue.
+
+<p align="center">
+<img src="docs/agency-comparison.png" alt="Six agency moment-tensor solutions for one earthquake, each with its own beachball" width="540" />
+</p>
+
+### 📈 The actual wave, and the actual picks
 
 For any event, QuakeLive finds the nearest open seismic station in the EarthScope/IRIS
-FDSN archive and draws the real vertical-channel waveform: predicted P and S arrivals
-(iasp91), peak-shaking time, and the classic S−P single-station distance check.
-Both the raw samples (CSV with metadata header) and the plot (PNG) are downloadable —
-see the seismogram panel above.
+FDSN archive and draws the real vertical-channel waveform — then overlays **both** the
+iasp91 model prediction *and* the genuine USGS analyst pick for that station, with its
+timing residual. Model versus reality, on one plot. Raw samples (CSV with metadata header)
+and the plot (PNG) are both downloadable — see the seismogram panel above.
 
 ### 📐 Know your magnitudes
 

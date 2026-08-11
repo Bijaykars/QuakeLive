@@ -1349,33 +1349,109 @@ a:focus-visible {
 
 .seismogram-facts .fact-card small { line-height: 1.4; }
 
-.seismogram-idle p {
-  margin: 0;
-  color: var(--color-ink-mid);
-  font-size: 10.5px;
-  line-height: 1.55;
+.fact-card.is-observed {
+  border-color: rgba(74, 222, 128, 0.28);
+  background: rgba(74, 222, 128, 0.05);
+}
+.fact-card.is-observed strong { color: #86efac; }
+
+.seismogram-legend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 8px 0 0;
+  color: var(--color-ink-low);
+  font-size: 8.75px;
+}
+.seismogram-legend span {
+  width: 15px;
+  height: 0;
+  flex: 0 0 auto;
+  border-top: 2px dashed var(--color-accent);
+}
+.seismogram-legend .is-observed {
+  margin-left: 9px;
+  border-top: 2px solid #4ade80;
 }
 
-.seismogram-idle button {
-  min-height: 34px;
-  margin-top: 10px;
-  padding: 0 14px;
-  border: 1px solid rgba(119, 213, 255, 0.32);
-  border-radius: 9px;
-  background: rgba(119, 213, 255, 0.09);
-  color: var(--color-accent);
+/* Multi-agency comparison */
+.agency-spread {
+  margin: 0 0 11px;
+  color: var(--color-ink-mid);
+  font-size: 11px;
+  line-height: 1.6;
+}
+.agency-spread strong { color: var(--color-ink-hi); font-family: var(--font-mono); font-weight: 570; }
+
+.agency-list { display: flex; flex-direction: column; gap: 6px; }
+
+.agency-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid rgba(35, 48, 65, 0.72);
+  border-radius: 11px;
+  background: rgba(255, 255, 255, 0.017);
+}
+
+.agency-row.is-gcmt {
+  border-color: rgba(119, 213, 255, 0.24);
+  background: rgba(119, 213, 255, 0.04);
+}
+
+.agency-row__bb,
+.agency-row__nobb {
+  width: 40px;
+  height: 40px;
+  display: block;
+  border-radius: 50%;
+}
+.agency-row__nobb { border: 1px dashed rgba(86, 93, 105, 0.5); }
+
+.agency-row__body { min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.agency-row__body strong {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: var(--color-ink-hi);
   font-size: 11px;
   font-weight: 570;
-  transition: background 150ms ease;
+}
+.agency-row__body strong i {
+  padding: 1px 5px;
+  border: 1px solid rgba(119, 213, 255, 0.28);
+  border-radius: 999px;
+  color: var(--color-accent);
+  font-family: var(--font-mono);
+  font-size: 7.5px;
+  font-style: normal;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+.agency-row__body > span {
+  overflow: hidden;
+  color: var(--color-ink-low);
+  font-family: var(--font-mono);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.seismogram-idle button:hover { background: rgba(119, 213, 255, 0.16); }
-
-.seismogram-idle small {
-  display: block;
-  margin-top: 7px;
+.agency-row__nums { display: flex; flex-direction: column; align-items: end; gap: 3px; }
+.agency-row__nums strong {
+  color: var(--color-ink-hi);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  font-weight: 570;
+}
+.agency-row__nums > span {
   color: var(--color-ink-low);
-  font-size: 9px;
+  font-family: var(--font-mono);
+  font-size: 8.5px;
+  white-space: nowrap;
 }
 
 .seismogram-actions {

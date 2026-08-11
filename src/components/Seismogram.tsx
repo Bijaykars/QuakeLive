@@ -8,14 +8,21 @@ import {
   type SeismogramData,
 } from '../lib/seismogram'
 import { downloadCsv } from '../lib/exportCsv'
+import { fetchDetail, fetchPhasePicks, type PhasePick } from '../lib/usgsDetail'
 import type { CanonicalEvent } from '../types'
 
 const P_COLOR = '#77d5ff'
 const S_COLOR = '#ffad57'
+const OBSERVED_COLOR = '#4ade80'
 
 type Status = 'idle' | 'loading' | 'ready' | 'unavailable' | 'error'
 
-function drawTrace(canvas: HTMLCanvasElement, data: SeismogramData, originMs: number) {
+function drawTrace(
+  canvas: HTMLCanvasElement,
+  data: SeismogramData,
+  originMs: number,
+  observed: PhasePick[] = [],
+) {
   const dpr = window.devicePixelRatio || 1
   const w = canvas.clientWidth
   const h = canvas.clientHeight
@@ -71,6 +78,21 @@ function drawTrace(canvas: HTMLCanvasElement, data: SeismogramData, originMs: nu
   if (data.pArrivalS != null && data.pArrivalS < t1) marker(data.pArrivalS, 'P', P_COLOR)
   if (data.sArrivalS != null && data.sArrivalS < t1) marker(data.sArrivalS, 'S', S_COLOR)
 
+  // Analyst-picked arrivals for this exact station: solid where the model line is dashed.
+  for (const pick of observed) {
+    const s = pick.secondsAfterOrigin
+    if (s < t0 || s > t1) continue
+    ctx.strokeStyle = OBSERVED_COLOR
+    ctx.lineWidth = 1.4
+    ctx.beginPath()
+    ctx.moveTo(xFor(s) + 0.5, 0)
+    ctx.lineTo(xFor(s) + 0.5, h - 11)
+    ctx.stroke()
+    ctx.lineWidth = 1
+    ctx.fillStyle = OBSERVED_COLOR
+    ctx.fillText(pick.phase, xFor(s) + 3, 20)
+  }
+
   // waveform: min/max envelope per pixel column
   const startS = (data.startTimeMs - originMs) / 1000
   const scale = data.peakAbs > 0 ? (mid - 14) / data.peakAbs : 1
@@ -100,20 +122,39 @@ function drawTrace(canvas: HTMLCanvasElement, data: SeismogramData, originMs: nu
 
 export function SeismogramSection({ event }: { event: CanonicalEvent }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
-  // Waveforms are megabytes; fetch only when the reader asks, not on every event click.
-  const [armed, setArmed] = useState(false)
   const [state, setState] = useState<{ status: Status; data: SeismogramData | null }>({
-    status: 'idle',
+    status: 'loading',
     data: null,
   })
 
-  useEffect(() => {
-    setArmed(false)
-    setState({ status: 'idle', data: null })
-  }, [event.id])
+  const [observed, setObserved] = useState<PhasePick[]>([])
 
   useEffect(() => {
-    if (!armed) return
+    setObserved([])
+  }, [event.id])
+
+  // Analyst picks for the station on screen — only worth the fetch once a trace exists.
+  useEffect(() => {
+    const station = state.data
+    if (!station) return
+    const controller = new AbortController()
+    void fetchDetail(event)
+      .then((detail) => fetchPhasePicks(detail, event.time, controller.signal))
+      .then((picks) => {
+        if (controller.signal.aborted || !picks) return
+        setObserved(
+          picks.filter(
+            (p) => p.station === station.station && p.network === station.network,
+          ),
+        )
+      })
+      .catch(() => {})
+    return () => controller.abort()
+  }, [state.data, event.id]) // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Waveforms are megabytes, but only one request is ever in flight: changing event
+  // aborts the previous fetch before starting the next.
+  useEffect(() => {
     const controller = new AbortController()
     setState({ status: 'loading', data: null })
     void fetchSeismogram(event, controller.signal)
@@ -125,13 +166,13 @@ export function SeismogramSection({ event }: { event: CanonicalEvent }) {
         if (!controller.signal.aborted) setState({ status: 'error', data: null })
       })
     return () => controller.abort()
-  }, [event.id, armed]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [event.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (state.status === 'ready' && state.data && canvasRef.current) {
-      drawTrace(canvasRef.current, state.data, event.time)
+      drawTrace(canvasRef.current, state.data, event.time, observed)
     }
-  }, [state, event.time])
+  }, [state, event.time, observed])
 
   const data = state.data
   const spS = data?.pArrivalS != null && data.sArrivalS != null
@@ -145,15 +186,7 @@ export function SeismogramSection({ event }: { event: CanonicalEvent }) {
         <ProvenanceChip kind="reported" source="EarthScope FDSN" />
       </div>
 
-      {state.status === 'idle' && (
-        <div className="seismogram-idle">
-          <p>Fetch the real ground motion recorded by the closest open seismic station, with predicted P and S arrivals.</p>
-          <button type="button" onClick={() => setArmed(true)}>Load waveform</button>
-          <small>A few MB from the EarthScope archive · loads on request</small>
-        </div>
-      )}
-
-      {state.status === 'loading' && (
+      {(state.status === 'idle' || state.status === 'loading') && (
         <p className="section-empty">Finding the nearest seismic station and loading its waveform…</p>
       )}
       {state.status === 'error' && (
@@ -190,13 +223,36 @@ export function SeismogramSection({ event }: { event: CanonicalEvent }) {
               <strong>{`+${data.peakAtS.toFixed(1)} s`}</strong>
               <small>time of largest recorded swing</small>
             </div>
+            {observed.length > 0 && (
+              <div className="fact-card is-observed">
+                <span>Observed arrival{observed.length > 1 ? 's' : ''}</span>
+                <strong>
+                  {observed
+                    .slice(0, 2)
+                    .map((p) => `${p.phase} +${p.secondsAfterOrigin.toFixed(1)} s`)
+                    .join(' · ')}
+                </strong>
+                <small>
+                  Analyst-picked at this station
+                  {observed[0].residual != null
+                    ? ` · residual ${observed[0].residual > 0 ? '+' : ''}${observed[0].residual.toFixed(2)} s vs the location model`
+                    : ''}
+                </small>
+              </div>
+            )}
             <div className="fact-card">
               <span>S − P interval</span>
               <strong>{spS == null ? '—' : `${spS.toFixed(1)} s`}</strong>
               {spS != null && <small>× 8 km/s ≈ {Math.round(spS * 8).toLocaleString()} km — the classic single-station distance check</small>}
             </div>
           </div>
-          <p className="technical-caveat">Vertical-component amplitudes are raw digitizer counts — instrument response is not removed, so compare timing, not absolute size. P/S markers are model predictions, not picks.</p>
+          {observed.length > 0 && (
+            <p className="seismogram-legend">
+              <span className="is-model" aria-hidden="true" /> model prediction (iasp91)
+              <span className="is-observed" aria-hidden="true" /> observed pick (USGS analyst)
+            </p>
+          )}
+          <p className="technical-caveat">Vertical-component amplitudes are raw digitizer counts — instrument response is not removed, so compare timing, not absolute size. Dashed markers are model predictions; solid green markers are real analyst picks.</p>
           <div className="seismogram-actions">
             <button
               type="button"

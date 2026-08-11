@@ -346,6 +346,87 @@ export async function fetchLossOutlook(
   return out.length ? out : null
 }
 
+// --- observed phase picks (phase-data/quakeml.xml) ---
+
+export interface PhasePick {
+  network: string
+  station: string
+  channel: string
+  phase: string
+  timeMs: number
+  secondsAfterOrigin: number
+  residual: number | null
+  distanceDeg: number | null
+  azimuth: number | null
+  manual: boolean
+}
+
+// QuakeML joins <arrival> (phase, residual, geometry) to <pick> (station, absolute
+// time) through pickID. Parsed with DOMParser — text extraction only, no markup use.
+export async function fetchPhasePicks(
+  detail: UsgsDetail | null,
+  originMs: number,
+  signal: AbortSignal,
+): Promise<PhasePick[] | null> {
+  const url = trustedUsgsUrl(
+    preferredProduct(detail, 'phase-data')?.contents?.['quakeml.xml']?.url,
+  )
+  if (!url) return null
+  const response = await fetch(url, { signal })
+  if (!response.ok) return null
+  const doc = new DOMParser().parseFromString(await response.text(), 'application/xml')
+  if (doc.querySelector('parsererror')) return null
+
+  const text = (parent: Element, selector: string): string | null =>
+    parent.querySelector(selector)?.textContent?.trim() ?? null
+
+  const picks = new Map<string, { net: string; sta: string; cha: string; timeMs: number; manual: boolean }>()
+  for (const pick of doc.querySelectorAll('pick')) {
+    // A <pick> carries its identity in the publicID attribute; <arrival> refers to it
+    // through a <pickID> child element.
+    const id = pick.getAttribute('publicID')
+    const iso = pick.querySelector('time > value')?.textContent?.trim()
+    const wf = pick.querySelector('waveformID')
+    if (!id || !iso || !wf) continue
+    const timeMs = Date.parse(iso)
+    if (!Number.isFinite(timeMs)) continue
+    picks.set(id, {
+      net: wf.getAttribute('networkCode') ?? '',
+      sta: wf.getAttribute('stationCode') ?? '',
+      cha: wf.getAttribute('channelCode') ?? '',
+      timeMs,
+      manual: text(pick, 'evaluationMode') === 'manual',
+    })
+  }
+
+  const num2 = (v: string | null): number | null => {
+    if (v == null) return null
+    const n = Number(v)
+    return Number.isFinite(n) ? n : null
+  }
+
+  const out: PhasePick[] = []
+  for (const arrival of doc.querySelectorAll('arrival')) {
+    const id = text(arrival, 'pickID')
+    const pick = id ? picks.get(id) : undefined
+    const phase = text(arrival, 'phase')
+    if (!pick || !phase) continue
+    out.push({
+      network: pick.net,
+      station: pick.sta,
+      channel: pick.cha,
+      phase,
+      timeMs: pick.timeMs,
+      secondsAfterOrigin: (pick.timeMs - originMs) / 1000,
+      residual: num2(text(arrival, 'timeResidual')),
+      distanceDeg: num2(text(arrival, 'distance')),
+      azimuth: num2(text(arrival, 'azimuth')),
+      manual: pick.manual,
+    })
+  }
+  return out.length ? out : null
+}
+
 // --- ShakeMap finite rupture polygon ---
 
 type Ring = GeoJSON.Position[]

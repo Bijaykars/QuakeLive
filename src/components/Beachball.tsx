@@ -22,7 +22,12 @@ function projectAxis(axisValue: Axis, radius: number): { x: number; y: number } 
   return { x: r * Math.sin(az), y: -r * Math.cos(az) }
 }
 
-function drawBeachball(canvas: HTMLCanvasElement, mech: MechanismData) {
+export function drawBeachball(
+  canvas: HTMLCanvasElement,
+  mech: MechanismData,
+  options: { axes?: boolean } = {},
+) {
+  const { axes = true } = options
   const cssSize = canvas.clientWidth
   if (cssSize === 0) return
   const dpr = Math.min(2, window.devicePixelRatio || 1)
@@ -82,8 +87,10 @@ function drawBeachball(canvas: HTMLCanvasElement, mech: MechanismData) {
     ctx.fillStyle = '#f2f6fb'
     ctx.fillText(label, cx + x, cy + y + dpr * 0.5)
   }
-  mark(mech.tAxis, 'T', 'rgba(12, 18, 26, 0.85)', 'rgba(119, 213, 255, 0.7)')
-  mark(mech.pAxis, 'P', 'rgba(12, 18, 26, 0.85)', 'rgba(255, 173, 87, 0.7)')
+  if (axes) {
+    mark(mech.tAxis, 'T', 'rgba(12, 18, 26, 0.85)', 'rgba(119, 213, 255, 0.7)')
+    mark(mech.pAxis, 'P', 'rgba(12, 18, 26, 0.85)', 'rgba(255, 173, 87, 0.7)')
+  }
 }
 
 const deg = (v: number): string => `${Math.round(v)}°`

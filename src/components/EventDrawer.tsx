@@ -3,6 +3,7 @@ import { useStore } from '../state/store'
 import { ProvenanceChip } from './ProvenanceChip'
 import { SeismogramSection } from './Seismogram'
 import { BeachballSection } from './Beachball'
+import { AgencyComparisonSection } from './AgencyComparison'
 import {
   AftershockSection,
   ContextSections,
@@ -312,6 +313,7 @@ export function EventDrawer() {
             </section>
 
             <BeachballSection key={`bb-${event.id}`} event={event} />
+            <AgencyComparisonSection key={`agency-${event.id}`} event={event} />
             <SeismogramSection key={event.id} event={event} />
 
             <section className="drawer-section ground-motion-analysis">
