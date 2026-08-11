@@ -31,6 +31,7 @@ import { setMapInstance, flyToEvent } from './camera'
 import { useStore, visibleEvents } from '../state/store'
 import { fmtDepth, fmtMag, hexToRgb, relTime } from '../lib/format'
 import { haversineKm } from '../lib/geo'
+import { fetchDetail, fetchRupture } from '../lib/usgsDetail'
 import { useReducedMotion } from '../hooks/useReducedMotion'
 import type { ExpressionSpecification, GeoJSONSource } from 'maplibre-gl'
 import type { CanonicalEvent } from '../types'
@@ -38,6 +39,9 @@ import type { CanonicalEvent } from '../types'
 const SHAKEMAP_SOURCE = 'shakemap-contours'
 const SHAKEMAP_GLOW = 'shakemap-contours-glow'
 const SHAKEMAP_LINES = 'shakemap-contours-lines'
+const RUPTURE_SOURCE = 'shakemap-rupture'
+const RUPTURE_FILL = 'shakemap-rupture-fill'
+const RUPTURE_LINE = 'shakemap-rupture-line'
 const EMPTY_LINES: GeoJSON.FeatureCollection = { type: 'FeatureCollection', features: [] }
 
 const SHAKEMAP_COLORS = [
@@ -203,6 +207,29 @@ export function MapView() {
     map.once('style.load', () => {
       if (disposed) return
       map.addSource(SHAKEMAP_SOURCE, { type: 'geojson', data: EMPTY_LINES })
+      map.addSource(RUPTURE_SOURCE, { type: 'geojson', data: EMPTY_LINES })
+      // The fault plane that actually broke, where USGS publishes a finite rupture.
+      map.addLayer({
+        id: RUPTURE_FILL,
+        type: 'fill',
+        source: RUPTURE_SOURCE,
+        paint: { 'fill-color': '#ff4d72', 'fill-opacity': 0.16 },
+      })
+      map.addLayer({
+        id: RUPTURE_LINE,
+        type: 'line',
+        source: RUPTURE_SOURCE,
+        paint: {
+          // A vertical fault arrives as a bare trace, so give it a heavier stroke.
+          'line-color': '#ff8098',
+          'line-width': [
+            'interpolate', ['linear'], ['zoom'],
+            2, ['case', ['==', ['get', 'ruptureKind'], 'trace'], 2, 1.2],
+            9, ['case', ['==', ['get', 'ruptureKind'], 'trace'], 4.5, 2.6],
+          ],
+          'line-opacity': 0.92,
+        },
+      })
       map.addLayer({
         id: SHAKEMAP_GLOW,
         type: 'line',
@@ -289,6 +316,7 @@ export function MapView() {
         .catch((e: Error) => console.warn('[map] plates unavailable:', e.message))
       const src = map.getSource(QUAKE_SOURCE) as GeoJSONSource
       const contourSource = map.getSource(SHAKEMAP_SOURCE) as GeoJSONSource
+      const ruptureSource = map.getSource(RUPTURE_SOURCE) as GeoJSONSource
 
       // Data flows on store change (not per-frame): events / filter / palette / tick.
       let lastKey: unknown[] = []
@@ -306,6 +334,8 @@ export function MapView() {
       const loadSelectedShakemap = (selectedId: string | null) => {
         shakemapAbort?.abort()
         contourSource.setData(EMPTY_LINES)
+        ruptureSource.setData(EMPTY_LINES)
+        useStore.getState().setRupture(null)
         if (!selectedId) {
           useStore.getState().setShakingOverlay(null, 'idle')
           return
@@ -318,6 +348,18 @@ export function MapView() {
 
         const controller = new AbortController()
         shakemapAbort = controller
+
+        void fetchDetail(event)
+          .then((detail) => fetchRupture(detail, controller.signal))
+          .then((rupture) => {
+            if (disposed || controller.signal.aborted || !rupture) return
+            if (useStore.getState().selectedId !== selectedId) return
+            ruptureSource.setData(rupture)
+            const kinds = rupture.features.map((f) => f.properties?.ruptureKind)
+            useStore.getState().setRupture(kinds.includes('area') ? 'area' : 'trace')
+          })
+          .catch(() => {})
+
         useStore.getState().setShakingOverlay(selectedId, 'loading')
         void fetchShakemap(event, controller.signal)
           .then((result) => {

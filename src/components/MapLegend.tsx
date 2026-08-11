@@ -4,6 +4,7 @@ export function MapLegend() {
   const colorMode = useStore((s) => s.colorMode)
   const selectedId = useStore((s) => s.selectedId)
   const shakingOverlay = useStore((s) => s.shakingOverlay)
+  const rupture = useStore((s) => s.rupture)
 
   return (
     <div className="map-legend panel" aria-label="Map legend">
@@ -24,6 +25,13 @@ export function MapLegend() {
           )}
           {shakingOverlay.eventId === selectedId && shakingOverlay.status === 'official' && (
             <div><i className="map-legend__contour" aria-hidden="true" /><span>USGS MMI contours</span><small>official</small></div>
+          )}
+          {rupture && (
+            <div>
+              <i className={`map-legend__rupture ${rupture === 'trace' ? 'is-trace' : ''}`} aria-hidden="true" />
+              <span>{rupture === 'trace' ? 'Fault trace' : 'Rupture extent'}</span>
+              <small>official</small>
+            </div>
           )}
         </div>
       )}

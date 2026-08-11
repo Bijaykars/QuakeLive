@@ -3,6 +3,13 @@ import { useStore } from '../state/store'
 import { ProvenanceChip } from './ProvenanceChip'
 import { SeismogramSection } from './Seismogram'
 import { BeachballSection } from './Beachball'
+import {
+  AftershockSection,
+  ContextSections,
+  FeltReportsSection,
+  LossOutlookSection,
+  useEventContext,
+} from './EventContextPanels'
 import { fmtCoords, fmtDepth, fmtLocal, fmtMagBare, fmtUtc, relTime } from '../lib/format'
 import { fmtEnergy, fmtHiroshima, fmtTnt, radiatedEnergyJ } from '../lib/energy'
 import { fmtRuptureLength, globalRarity, ruptureLengthKm } from '../lib/context'
@@ -90,6 +97,7 @@ export function EventDrawer() {
   const event = selectedId ? events.get(selectedId) : undefined
   const headingRef = useRef<HTMLHeadingElement>(null)
   const contentRef = useRef<HTMLDivElement>(null)
+  const context = useEventContext(event)
   const [copied, setCopied] = useState(false)
   const [groundMotion, setGroundMotion] = useState<{
     status: 'idle' | 'loading' | 'ready' | 'unavailable' | 'error'
@@ -204,6 +212,11 @@ export function EventDrawer() {
               <p>{eventSummary(event)}</p>
               <small>This explanation is a guide, not a damage assessment. Local geology and buildings strongly affect shaking.</small>
             </section>
+
+            {context && <ContextSections context={context} />}
+            <AftershockSection key={`oaf-${event.id}`} event={event} />
+            <LossOutlookSection key={`loss-${event.id}`} event={event} />
+            {context && <FeltReportsSection key={`dyfi-${event.id}`} event={event} context={context} />}
 
             {rarity && (
               <section className="drawer-section">

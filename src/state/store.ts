@@ -35,6 +35,7 @@ interface Store {
     status: ShakemapStatus
     maxRadiusKm: number | null
   }
+  rupture: 'area' | 'trace' | null
   filters: { minMag: number | null }
   colorMode: ColorMode
   windowHours: WindowHours
@@ -55,6 +56,7 @@ interface Store {
     status: ShakemapStatus,
     maxRadiusKm?: number | null,
   ): void
+  setRupture(kind: 'area' | 'trace' | null): void
   bumpTick(): void
   pushToast(t: Omit<Toast, 'id'>): void
   dismissToast(id: number): void
@@ -78,6 +80,7 @@ export const useStore = create<Store>()(
       feed: { status: 'stale', lastGeneratedAt: 0, lastFetchAt: 0 },
       ws: { status: 'off' },
       shakingOverlay: { eventId: null, status: 'idle', maxRadiusKm: null },
+      rupture: null,
       filters: { minMag: null },
       colorMode: 'age',
       windowHours: 24,
@@ -213,6 +216,7 @@ export const useStore = create<Store>()(
       setShakingOverlay: (eventId, status, maxRadiusKm = null) => set({
         shakingOverlay: { eventId, status, maxRadiusKm },
       }),
+      setRupture: (kind) => set({ rupture: kind }),
       bumpTick: () => set({ tick: get().tick + 1 }),
       pushToast: (t) => set({ toasts: [...get().toasts, { ...t, id: toastSeq++ }] }),
       dismissToast: (id) => set({ toasts: get().toasts.filter((t) => t.id !== id) }),
