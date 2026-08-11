@@ -607,7 +607,7 @@ a:focus-visible {
   top: calc(var(--chrome-gap) + var(--topbar-height) + 12px);
   right: var(--chrome-gap);
   bottom: calc(var(--chrome-gap) + var(--timeline-height) + 14px);
-  width: min(450px, calc(100vw - 28px));
+  width: min(560px, calc(100vw - 28px));
   display: flex;
   flex-direction: column;
   overflow: hidden;
@@ -748,29 +748,24 @@ a:focus-visible {
   text-decoration: none;
 }
 
-.drawer-tabs {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 4px;
-  padding: 6px;
-  border-bottom: 1px solid rgba(35, 48, 65, 0.72);
-  background: rgba(2, 5, 9, 0.2);
-}
-
-.drawer-tabs button {
-  min-height: 34px;
-  border: 0;
-  border-radius: 8px;
-  background: transparent;
+.drawer-divider {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 4px 0;
   color: var(--color-ink-low);
-  font-size: 10.5px;
-  font-weight: 550;
+  font-family: var(--font-mono);
+  font-size: 9px;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
 }
 
-.drawer-tabs button:hover { color: var(--color-ink-mid); }
-.drawer-tabs button.is-active {
-  background: rgba(119, 213, 255, 0.075);
-  color: var(--color-accent);
+.drawer-divider::before,
+.drawer-divider::after {
+  height: 1px;
+  flex: 1;
+  background: linear-gradient(90deg, transparent, rgba(35, 48, 65, 0.9), transparent);
+  content: '';
 }
 
 .event-drawer__content {
@@ -789,7 +784,7 @@ a:focus-visible {
 .metric-grid,
 .technical-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(148px, 1fr));
   gap: 7px;
 }
 
@@ -1167,7 +1162,6 @@ a:focus-visible {
 }
 
 .technical-grid .fact-card { min-height: 66px; }
-.ground-motion-analysis { order: -1; }
 
 .seismogram-meta {
   margin: 0 0 9px;
@@ -1192,6 +1186,35 @@ a:focus-visible {
 }
 
 .seismogram-facts .fact-card small { line-height: 1.4; }
+
+.seismogram-idle p {
+  margin: 0;
+  color: var(--color-ink-mid);
+  font-size: 10.5px;
+  line-height: 1.55;
+}
+
+.seismogram-idle button {
+  min-height: 34px;
+  margin-top: 10px;
+  padding: 0 14px;
+  border: 1px solid rgba(119, 213, 255, 0.32);
+  border-radius: 9px;
+  background: rgba(119, 213, 255, 0.09);
+  color: var(--color-accent);
+  font-size: 11px;
+  font-weight: 570;
+  transition: background 150ms ease;
+}
+
+.seismogram-idle button:hover { background: rgba(119, 213, 255, 0.16); }
+
+.seismogram-idle small {
+  display: block;
+  margin-top: 7px;
+  color: var(--color-ink-low);
+  font-size: 9px;
+}
 
 .seismogram-actions {
   display: flex;
@@ -1916,7 +1939,7 @@ a:focus-visible {
   .topbar__stats,
   .map-legend,
   .stats-panel { display: none; }
-  .event-drawer { width: 420px; }
+  .event-drawer { width: 460px; }
 
   /* The floating summary is gone here — surface it inside the event rail instead. */
   .event-rail__stats {

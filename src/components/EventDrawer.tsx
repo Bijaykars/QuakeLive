@@ -89,7 +89,7 @@ export function EventDrawer() {
   const select = useStore((s) => s.select)
   const event = selectedId ? events.get(selectedId) : undefined
   const headingRef = useRef<HTMLHeadingElement>(null)
-  const [tab, setTab] = useState<'overview' | 'technical'>('overview')
+  const contentRef = useRef<HTMLDivElement>(null)
   const [copied, setCopied] = useState(false)
   const [groundMotion, setGroundMotion] = useState<{
     status: 'idle' | 'loading' | 'ready' | 'unavailable' | 'error'
@@ -99,14 +99,14 @@ export function EventDrawer() {
   useEffect(() => {
     if (!event) return
     const previous = document.activeElement as HTMLElement | null
-    setTab('overview')
     setCopied(false)
+    contentRef.current?.scrollTo({ top: 0 })
     headingRef.current?.focus()
     return () => previous?.focus?.()
   }, [event?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (!event || tab !== 'technical') return
+    if (!event) return
     const controller = new AbortController()
     setGroundMotion({ status: 'loading', data: null })
     void fetchGroundMotionAnalysis(event, controller.signal)
@@ -120,7 +120,7 @@ export function EventDrawer() {
         if (!controller.signal.aborted) setGroundMotion({ status: 'error', data: null })
       })
     return () => controller.abort()
-  }, [event?.id, tab]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [event?.id]) // eslint-disable-line react-hooks/exhaustive-deps
 
   if (!event) return null
 
@@ -187,14 +187,8 @@ export function EventDrawer() {
         </a>
       )}
 
-      <div className="drawer-tabs" role="tablist" aria-label="Earthquake detail sections">
-        <button type="button" role="tab" aria-selected={tab === 'overview'} onClick={() => setTab('overview')} className={tab === 'overview' ? 'is-active' : ''}>Overview</button>
-        <button type="button" role="tab" aria-selected={tab === 'technical'} onClick={() => setTab('technical')} className={tab === 'technical' ? 'is-active' : ''}>Technical</button>
-      </div>
-
-      <div className="event-drawer__content select-text">
-        {tab === 'overview' ? (
-          <div className="drawer-sections" role="tabpanel">
+      <div className="event-drawer__content select-text" ref={contentRef}>
+          <div className="drawer-sections">
             <section className="metric-grid" aria-label="Key earthquake facts">
               <Fact label="Depth" value={fmtDepth(event.depthKm)} note={event.depthKm != null && event.depthKm < 35 ? 'Shallow' : undefined} />
               <Fact label="Max shaking" value={event.mmi == null ? '—' : `MMI ${event.mmi.toFixed(1)}`} note={mmiDescription(event.mmi)} />
@@ -282,9 +276,9 @@ export function EventDrawer() {
               </p>
               {event.sources.emsc && event.sources.usgs && <small className="section-note">First pushed by EMSC, then enriched with USGS data.</small>}
             </section>
-          </div>
-        ) : (
-          <div className="drawer-sections" role="tabpanel">
+
+            <div className="drawer-divider"><span>Technical detail</span></div>
+
             <section className="drawer-section">
               <div className="section-heading">
                 <div><span className="eyebrow">Reported values</span><h3>Source facts</h3></div>
@@ -313,7 +307,7 @@ export function EventDrawer() {
                 <ProvenanceChip kind="calculated" source="USGS inputs" />
               </div>
 
-              {groundMotion.status === 'loading' && (
+              {(groundMotion.status === 'idle' || groundMotion.status === 'loading') && (
                 <p className="section-empty">Loading the preferred USGS ShakeMap model curves…</p>
               )}
 
@@ -389,7 +383,6 @@ export function EventDrawer() {
               )}
             </section>
           </div>
-        )}
       </div>
 
       <footer className="event-drawer__footer">

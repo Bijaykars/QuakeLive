@@ -44,11 +44,12 @@ networks publishing it — with the science shown, not just the dots.
 
 ## 🔎 Every event, explained
 
-Click any dot and QuakeLive explains it twice: once in plain language, once for engineers.
+Click any dot and QuakeLive explains it twice on one scrolling page — plain language first,
+then the full technical record.
 
-| Overview | Technical |
+| Plain language | Technical detail |
 | --- | --- |
-| Plain-language summary, depth, felt reports, PAGER alert | Full source record (stations, azimuthal gap, RMS…) |
+| Summary, depth, felt reports, PAGER alert | Full source record (stations, azimuthal gap, RMS…) |
 | Official USGS ShakeMap MMI contours drawn on the map | ShakeMap ground-motion curves (PGA, PGV, SA, ±σ) |
 | Radiated energy with TNT and Hiroshima equivalents | Focal mechanism "beachball" from the moment tensor |
 | "How common is this size?" global rarity context | Nearest-station seismogram with P/S arrivals |

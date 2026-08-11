@@ -24,8 +24,8 @@ function detailPanelOffset(): [number, number] {
     // epicentre in the exposed map area instead of underneath the sheet.
     return [0, -Math.min(220, Math.round(window.innerHeight * 0.25))]
   }
-  if (window.innerWidth < 1120) return [-180, 0]
-  return [-225, 0]
+  if (window.innerWidth < 1120) return [-200, 0]
+  return [-270, 0]
 }
 
 export function flyToEvent(

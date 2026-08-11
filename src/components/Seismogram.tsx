@@ -13,7 +13,7 @@ import type { CanonicalEvent } from '../types'
 const P_COLOR = '#77d5ff'
 const S_COLOR = '#ffad57'
 
-type Status = 'loading' | 'ready' | 'unavailable' | 'error'
+type Status = 'idle' | 'loading' | 'ready' | 'unavailable' | 'error'
 
 function drawTrace(canvas: HTMLCanvasElement, data: SeismogramData, originMs: number) {
   const dpr = window.devicePixelRatio || 1
@@ -100,12 +100,20 @@ function drawTrace(canvas: HTMLCanvasElement, data: SeismogramData, originMs: nu
 
 export function SeismogramSection({ event }: { event: CanonicalEvent }) {
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  // Waveforms are megabytes; fetch only when the reader asks, not on every event click.
+  const [armed, setArmed] = useState(false)
   const [state, setState] = useState<{ status: Status; data: SeismogramData | null }>({
-    status: 'loading',
+    status: 'idle',
     data: null,
   })
 
   useEffect(() => {
+    setArmed(false)
+    setState({ status: 'idle', data: null })
+  }, [event.id])
+
+  useEffect(() => {
+    if (!armed) return
     const controller = new AbortController()
     setState({ status: 'loading', data: null })
     void fetchSeismogram(event, controller.signal)
@@ -117,7 +125,7 @@ export function SeismogramSection({ event }: { event: CanonicalEvent }) {
         if (!controller.signal.aborted) setState({ status: 'error', data: null })
       })
     return () => controller.abort()
-  }, [event.id]) // eslint-disable-line react-hooks/exhaustive-deps
+  }, [event.id, armed]) // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (state.status === 'ready' && state.data && canvasRef.current) {
@@ -136,6 +144,14 @@ export function SeismogramSection({ event }: { event: CanonicalEvent }) {
         <div><span className="eyebrow">Recorded wave</span><h3>Nearest-station seismogram</h3></div>
         <ProvenanceChip kind="reported" source="EarthScope FDSN" />
       </div>
+
+      {state.status === 'idle' && (
+        <div className="seismogram-idle">
+          <p>Fetch the real ground motion recorded by the closest open seismic station, with predicted P and S arrivals.</p>
+          <button type="button" onClick={() => setArmed(true)}>Load waveform</button>
+          <small>A few MB from the EarthScope archive · loads on request</small>
+        </div>
+      )}
 
       {state.status === 'loading' && (
         <p className="section-empty">Finding the nearest seismic station and loading its waveform…</p>
