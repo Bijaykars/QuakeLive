@@ -92,16 +92,32 @@ export function App() {
     return () => window.removeEventListener('keydown', onKey)
   }, [])
 
-  // Deep link in: ?event=<id> selects once data arrives.
+  // Deep link in: ?event=<id> selects once data arrives. If the 24 h feed lacks the id,
+  // widen to the 7-day feed once; if that lacks it too, give up.
   useEffect(() => {
     const wanted = new URLSearchParams(location.search).get('event')
     if (!wanted) return
+    let widenedAt: number | null = null // feed.lastFetchAt when we asked for the week feed
     const tryApply = (s = useStore.getState()) => {
       const e = s.events.get(wanted)
-      if (!e) return false
-      s.select(wanted)
-      flyToEvent(e, true)
-      return true
+      if (e) {
+        // Lower the min-mag filter to the loosest preset that still shows the event.
+        const min = s.filters.minMag
+        if (min != null && (e.mag == null || e.mag < min)) {
+          s.setMinMag(e.mag != null && e.mag >= 2.5 ? 2.5 : null)
+        }
+        s.select(wanted)
+        flyToEvent(e, true)
+        return true
+      }
+      if (s.feed.lastFetchAt === 0) return false // first poll not done yet
+      if (widenedAt == null) {
+        if (s.windowHours === 168) return true // already the widest feed
+        widenedAt = s.feed.lastFetchAt
+        s.setWindowHours(168) // useFeed refetches immediately on windowHours change
+        return false
+      }
+      return s.feed.lastFetchAt > widenedAt // week data landed and still no id
     }
     if (tryApply()) return
     const unsub = useStore.subscribe((s) => {
